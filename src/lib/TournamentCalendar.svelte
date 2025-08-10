@@ -234,9 +234,9 @@
 
         <!-- Location Filter -->
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <h6 class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Locations
-          </label>
+          </h6>
           <div class="space-y-2 max-h-32 overflow-y-auto">
             {#each getUniqueLocations() as location}
               <label class="flex items-start">
@@ -489,7 +489,7 @@
                             src={tournament.poster} 
                             alt={`${tournament.name} poster`}
                             class="max-w-full max-h-48 object-contain rounded"
-                            on:error={(e) => e.currentTarget.style.display = 'none'}
+                            onerror={(e) => e.currentTarget.style.display = 'none'}
                           />
                         {:else}
                           <div class="text-center text-gray-500 dark:text-gray-400">
