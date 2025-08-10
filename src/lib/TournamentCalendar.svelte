@@ -9,6 +9,7 @@
   
   let currentDate = $state(new Date())
   let selectedDate = $state<Date | null>(null)
+  let expandedTournaments = $state<Set<number>>(new Set())
   
   // Filter state
   let filters = $state({
@@ -142,6 +143,15 @@
   const getSelectedDateTournaments = () => {
     if (!selectedDate) return []
     return getTournamentsForDate(selectedDate)
+  }
+  
+  const toggleTournamentDetails = (tournamentId: number) => {
+    if (expandedTournaments.has(tournamentId)) {
+      expandedTournaments.delete(tournamentId)
+    } else {
+      expandedTournaments.add(tournamentId)
+    }
+    expandedTournaments = new Set(expandedTournaments)
   }
 </script>
 
@@ -453,12 +463,126 @@
                     {tournament.state.toUpperCase()}
                   </span>
                   {#if tournament.enable_registration && tournament.state === 'open'}
-                    <button class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors">
+                    <button class="px-3 py-1 bg-blue-600 text-white text-sm rounded hover:bg-blue-700 transition-colors mb-2">
                       Register
                     </button>
                   {/if}
+                  <button 
+                    class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    onclick={() => toggleTournamentDetails(tournament.id)}
+                  >
+                    {expandedTournaments.has(tournament.id) ? 'Hide' : 'Show'} Additional Information
+                  </button>
                 </div>
               </div>
+              
+              <!-- Expanded Tournament Details -->
+              {#if expandedTournaments.has(tournament.id)}
+                <div class="mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
+                  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Tournament Poster -->
+                    <div>
+                      <h5 class="font-semibold text-gray-900 dark:text-white mb-3">Tournament Poster</h5>
+                      <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 flex items-center justify-center min-h-48">
+                        {#if tournament.poster && tournament.poster !== "https://example.com/poster.png"}
+                          <img 
+                            src={tournament.poster} 
+                            alt={`${tournament.name} poster`}
+                            class="max-w-full max-h-48 object-contain rounded"
+                            on:error={(e) => e.currentTarget.style.display = 'none'}
+                          />
+                        {:else}
+                          <div class="text-center text-gray-500 dark:text-gray-400">
+                            <svg class="w-12 h-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            <p>No poster available</p>
+                          </div>
+                        {/if}
+                      </div>
+                    </div>
+
+                    <!-- Additional Information -->
+                    <div class="space-y-4">
+                      <!-- Tournament Rules -->
+                      {#if tournament.rules}
+                        <div>
+                          <h6 class="font-medium text-gray-900 dark:text-white mb-2">Rules</h6>
+                          <p class="text-sm text-gray-600 dark:text-gray-300">{tournament.rules}</p>
+                        </div>
+                      {/if}
+
+                      <!-- Entry Fee -->
+                      {#if tournament.entry_fee}
+                        <div>
+                          <h6 class="font-medium text-gray-900 dark:text-white mb-2">Entry Fee</h6>
+                          <p class="text-sm text-gray-600 dark:text-gray-300">€{tournament.entry_fee}</p>
+                        </div>
+                      {/if}
+
+                      <!-- Contact Information -->
+                      {#if tournament.contact_info}
+                        <div>
+                          <h6 class="font-medium text-gray-900 dark:text-white mb-2">Contact</h6>
+                          <p class="text-sm text-gray-600 dark:text-gray-300">{tournament.contact_info}</p>
+                        </div>
+                      {/if}
+
+                      <!-- Tournament Dates -->
+                      <div>
+                        <h6 class="font-medium text-gray-900 dark:text-white mb-2">Tournament Series</h6>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                          From {new Date(tournament.tournament_start_date).toLocaleDateString()}
+                          {#if tournament.tournament_end_date}
+                            to {new Date(tournament.tournament_end_date).toLocaleDateString()}
+                          {:else}
+                            (Ongoing)
+                          {/if}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Registered Players -->
+                  {#if tournament.registered_players && tournament.registered_players.length > 0}
+                    <div class="mt-6">
+                      <h5 class="font-semibold text-gray-900 dark:text-white mb-4">
+                        Registered Players ({tournament.registered_players.length})
+                      </h5>
+                      <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {#each tournament.registered_players as player}
+                            <div class="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg">
+                              <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
+                                {#if player.avatar}
+                                  <img src={player.avatar} alt={player.name} class="w-10 h-10 rounded-full object-cover" />
+                                {:else}
+                                  <span class="text-blue-600 dark:text-blue-400 font-semibold text-sm">
+                                    {player.name.split(' ').map(n => n[0]).join('')}
+                                  </span>
+                                {/if}
+                              </div>
+                              <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                                  {player.name}
+                                </p>
+                                {#if player.rating}
+                                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                                    Rating: {player.rating}
+                                  </p>
+                                {/if}
+                                <p class="text-xs text-gray-500 dark:text-gray-400">
+                                  Registered: {new Date(player.registration_date).toLocaleDateString()}
+                                </p>
+                              </div>
+                            </div>
+                          {/each}
+                        </div>
+                      </div>
+                    </div>
+                  {/if}
+                </div>
+              {/if}
             </div>
           {/each}
         </div>

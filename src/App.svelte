@@ -1,155 +1,33 @@
 <script lang="ts">
+  import { onMount } from 'svelte'
   import BurgerMenu from './lib/BurgerMenu.svelte'
   import LanguageSelector from './lib/LanguageSelector.svelte'
   import TournamentCalendar from './lib/TournamentCalendar.svelte'
   import type { Tournament } from './lib/types.js'
+  import { fetchTournaments, ApiError } from './lib/api.js'
 
   let title = 'AjedrezCerca.es'
+  let tournaments = $state<Tournament[]>([])
+  let loading = $state(true)
+  let error = $state<string | null>(null)
   
-  const mockTournaments: Tournament[] = [
-    {
-      id: 1,
-      name: "Sunday Morning Chess Club",
-      description: "Weekly chess tournament every Sunday morning",
-      poster: "https://example.com/poster.png",
-      schedules: [
-        { day_of_week: 0, start_time: "09:00", end_time: "13:00" } // Every Sunday 9am-1pm
-      ],
-      tournament_start_date: "2025-08-01T00:00:00Z",
-      tournament_end_date: "2025-12-31T00:00:00Z",
-      location: "Carrer d'Alexandre Galí, 24, Sant Andreu, 08027 Barcelona",
-      state: "closed",
-      prize_pool: 100,
-      winner_id: null,
-      creator_id: 1,
-      player_count: 15,
-      player_count_limit: 32,
-      player_count_limit_enabled: true,
-      available_slots: 17,
-      registration_start_time: "2025-08-01T00:00:00Z",
-      registration_end_time: "2025-12-30T23:59:59Z",
-      enable_registration: true,
-      enable_ranking: true,
-      ranking_type: "glicko",
-      created_at: "2025-08-01T00:00:00Z",
-      updated_at: "2025-08-01T00:00:00Z"
-    },
-    {
-      id: 2,
-      name: "Midweek Chess Challenge",
-      description: "Tuesday and Wednesday evening tournaments",
-      poster: "https://example.com/poster.png",
-      schedules: [
-        { day_of_week: 2, start_time: "19:00", end_time: "22:00" }, // Tuesday 7pm-10pm
-        { day_of_week: 3, start_time: "19:30", end_time: "22:30" }  // Wednesday 7:30pm-10:30pm
-      ],
-      tournament_start_date: "2025-08-05T00:00:00Z",
-      tournament_end_date: "2025-11-30T00:00:00Z",
-      location: "Plaça de Catalunya, 1, Barcelona",
-      state: "open",
-      prize_pool: 200,
-      winner_id: null,
-      creator_id: 2,
-      player_count: 8,
-      player_count_limit: 16,
-      player_count_limit_enabled: true,
-      available_slots: 8,
-      registration_start_time: "2025-08-01T00:00:00Z",
-      registration_end_time: "2025-11-29T23:59:59Z",
-      enable_registration: true,
-      enable_ranking: true,
-      ranking_type: "elo",
-      created_at: "2025-08-01T00:00:00Z",
-      updated_at: "2025-08-01T00:00:00Z"
-    },
-    {
-      id: 3,
-      name: "Weekend Warriors",
-      description: "Alternating schedule - Monday/Friday one week, then Saturday next week",
-      poster: "https://example.com/poster.png",
-      schedules: [
-        { day_of_week: 1, start_time: "18:00", end_time: "21:00" }, // Monday 6pm-9pm
-        { day_of_week: 5, start_time: "18:30", end_time: "21:30" }, // Friday 6:30pm-9:30pm
-        { day_of_week: 6, start_time: "14:00", end_time: "17:00" }  // Saturday 2pm-5pm
-      ],
-      tournament_start_date: "2025-08-10T00:00:00Z",
-      tournament_end_date: "2025-10-31T00:00:00Z",
-      location: "Parc de la Ciutadella, Barcelona",
-      state: "open",
-      prize_pool: 150,
-      winner_id: null,
-      creator_id: 3,
-      player_count: 12,
-      player_count_limit: 24,
-      player_count_limit_enabled: true,
-      available_slots: 12,
-      registration_start_time: "2025-08-01T00:00:00Z",
-      registration_end_time: "2025-10-30T23:59:59Z",
-      enable_registration: true,
-      enable_ranking: true,
-      ranking_type: "elo",
-      created_at: "2025-08-01T00:00:00Z",
-      updated_at: "2025-08-01T00:00:00Z"
-    },
-    {
-      id: 4,
-      name: "duplicates",
-      description: "seeing how dupicate schedules look in the calendar",
-      poster: "https://example.com/poster.png",
-      schedules: [
-        { day_of_week: 1, start_time: "18:00", end_time: "21:00" }, // Monday 6pm-9pm
-        { day_of_week: 5, start_time: "18:30", end_time: "21:30" }, // Friday 6:30pm-9:30pm
-        { day_of_week: 6, start_time: "14:00", end_time: "17:00" }  // Saturday 2pm-5pm
-      ],
-      tournament_start_date: "2025-08-10T00:00:00Z",
-      tournament_end_date: "2025-10-31T00:00:00Z",
-      location: "Parc de la Ciutadella, Barcelona",
-      state: "open",
-      prize_pool: 150,
-      winner_id: null,
-      creator_id: 3,
-      player_count: 12,
-      player_count_limit: 24,
-      player_count_limit_enabled: true,
-      available_slots: 12,
-      registration_start_time: "2025-08-01T00:00:00Z",
-      registration_end_time: "2025-10-30T23:59:59Z",
-      enable_registration: true,
-      enable_ranking: true,
-      ranking_type: "elo",
-      created_at: "2025-08-01T00:00:00Z",
-      updated_at: "2025-08-01T00:00:00Z"
-    },
-    {
-      id: 5,
-      name: "three in one day",
-      description: "seeing how 3 tournaments in one day look",
-      poster: "https://example.com/poster.png",
-      schedules: [
-        { day_of_week: 1, start_time: "18:00", end_time: "21:00" }, // Monday 6pm-9pm
-        { day_of_week: 5, start_time: "18:30", end_time: "21:30" }, // Friday 6:30pm-9:30pm
-        { day_of_week: 6, start_time: "14:00", end_time: "17:00" }  // Saturday 2pm-5pm
-      ],
-      tournament_start_date: "2025-08-10T00:00:00Z",
-      tournament_end_date: "2025-10-31T00:00:00Z",
-      location: "Parc de la Ciutadella, Barcelona",
-      state: "open",
-      prize_pool: 150,
-      winner_id: null,
-      creator_id: 3,
-      player_count: 12,
-      player_count_limit: 24,
-      player_count_limit_enabled: true,
-      available_slots: 12,
-      registration_start_time: "2025-08-01T00:00:00Z",
-      registration_end_time: "2025-10-30T23:59:59Z",
-      enable_registration: true,
-      enable_ranking: true,
-      ranking_type: "elo",
-      created_at: "2025-08-01T00:00:00Z",
-      updated_at: "2025-08-01T00:00:00Z"
+  onMount(async () => {
+    try {
+      loading = true
+      error = null
+      tournaments = await fetchTournaments()
+    } catch (err) {
+      if (err instanceof ApiError) {
+        error = err.message
+      } else {
+        error = 'An unexpected error occurred while loading tournaments.'
+      }
+      console.error('Error fetching tournaments:', err)
+    } finally {
+      loading = false
     }
-  ]
+  })
+  
 </script>
 
 <BurgerMenu />
@@ -162,6 +40,46 @@
       <p class="text-lg text-gray-600 dark:text-gray-300">Chess tournaments and events in Spain</p>
     </div>
     
-    <TournamentCalendar tournaments={mockTournaments} />
+    {#if loading}
+      <!-- Loading State -->
+      <div class="flex flex-col items-center justify-center py-12">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+        <p class="text-gray-600 dark:text-gray-300">Loading tournaments...</p>
+      </div>
+    {:else if error}
+      <!-- Error State -->
+      <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 max-w-2xl mx-auto">
+        <div class="flex items-center mb-4">
+          <svg class="w-6 h-6 text-red-600 dark:text-red-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <h3 class="text-lg font-semibold text-red-800 dark:text-red-200">Error Loading Tournaments</h3>
+        </div>
+        <p class="text-red-700 dark:text-red-300 mb-4">{error}</p>
+        <button 
+          class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+          onclick={async () => {
+            try {
+              loading = true
+              error = null
+              tournaments = await fetchTournaments()
+            } catch (err) {
+              if (err instanceof ApiError) {
+                error = err.message
+              } else {
+                error = 'An unexpected error occurred while loading tournaments.'
+              }
+            } finally {
+              loading = false
+            }
+          }}
+        >
+          Retry
+        </button>
+      </div>
+    {:else}
+      <!-- Success State -->
+      <TournamentCalendar tournaments={tournaments} />
+    {/if}
   </div>
 </main>

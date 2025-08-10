@@ -4,6 +4,15 @@ export interface TournamentSchedule {
   end_time: string // Time in HH:MM format (e.g., "17:00")
 }
 
+export interface Player {
+  id: number
+  name: string
+  email: string
+  rating?: number
+  registration_date: string
+  avatar?: string
+}
+
 export interface Tournament {
   id: number
   name: string
@@ -28,6 +37,10 @@ export interface Tournament {
   ranking_type: 'elo' | 'glicko'
   created_at: string
   updated_at: string
+  registered_players?: Player[] // List of registered players
+  rules?: string // Tournament rules
+  contact_info?: string // Contact information
+  entry_fee?: number // Entry fee in addition to prize pool
 }
 
 export interface TournamentResponse {
